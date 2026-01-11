@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { gql } from '@apollo/client';
 import { useMutation } from '@apollo/client/react';
 import { useRouter } from 'next/navigation';
+import { Lock, Mail, ArrowRight, Loader2 } from 'lucide-react';
 
 const LOGIN_MUTATION = gql`
   mutation Login($loginInput: LoginInput!) {
@@ -63,76 +64,116 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-100 to-slate-200">
-      <div className="w-full max-w-md p-8 bg-white shadow-2xl rounded-2xl">
-        <div className="mb-8 text-center">
-          <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Welcome Back</h1>
-          <p className="mt-2 text-sm text-gray-600">Sign in to access your account</p>
-        </div>
+    <div className="flex items-center justify-center min-h-screen bg-[conic-gradient(at_top_right,_var(--tw-gradient-stops))] from-indigo-900 via-purple-900 to-slate-900">
+      <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))] opacity-20"></div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label className="block mb-2 text-sm font-medium text-gray-700">Email Address</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-3 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-              placeholder="name@company.com"
-              required
-            />
-          </div>
-          <div>
-            <label className="block mb-2 text-sm font-medium text-gray-700">Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-              placeholder="••••••••"
-              required
-            />
+      <div className="w-full max-w-md p-8 relative z-10">
+        <div className="absolute inset-0 bg-white/10 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20"></div>
+
+        <div className="relative z-20 space-y-8 p-4">
+          <div className="text-center space-y-2">
+            <div className="inline-flex p-3 rounded-2xl bg-gradient-to-tr from-blue-500 to-cyan-400 shadow-lg mb-4">
+              <Lock className="w-8 h-8 text-white" />
+            </div>
+            <h1 className="text-4xl font-bold text-white tracking-tight">Welcome Back</h1>
+            <p className="text-blue-100/80 text-sm">Enter your credentials to access the portal</p>
           </div>
 
-          {error && (
-            <div className="p-3 text-sm text-red-600 bg-red-50 rounded-lg border border-red-100">
-              {error.message}
-            </div>
-          )}
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-blue-100 ml-1">Email Address</label>
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Mail className="h-5 w-5 text-indigo-300 group-focus-within:text-blue-400 transition-colors" />
+                  </div>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="block w-full pl-10 pr-3 py-3 border border-white/10 rounded-xl leading-5 bg-white/5 text-white placeholder-indigo-200/50 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-400/50 focus:bg-white/10 transition-all duration-200 sm:text-sm"
+                    placeholder="admin@slooze.com"
+                    required
+                  />
+                </div>
+              </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-3 px-4 text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:ring-blue-200 font-semibold rounded-lg shadow-lg transition-all transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-          >
-            {loading ? (
-              <span className="flex items-center justify-center gap-2">
-                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Signing in...
-              </span>
-            ) : 'Sign In'}
-          </button>
-        </form>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-blue-100 ml-1">Password</label>
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Lock className="h-5 w-5 text-indigo-300 group-focus-within:text-blue-400 transition-colors" />
+                  </div>
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="block w-full pl-10 pr-3 py-3 border border-white/10 rounded-xl leading-5 bg-white/5 text-white placeholder-indigo-200/50 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-400/50 focus:bg-white/10 transition-all duration-200 sm:text-sm"
+                    placeholder="••••••••"
+                    required
+                  />
+                </div>
+              </div>
+            </div>
 
-        <div className="mt-8 pt-6 border-t border-gray-100">
-          <p className="text-xs font-semibold text-gray-500 text-center uppercase tracking-wider mb-4">Demo Credentials</p>
-          <div className="grid gap-2 text-xs text-gray-600">
-            <div className="flex justify-between items-center p-2 bg-gray-50 rounded border border-gray-100">
-              <span className="font-medium">Admin</span>
-              <code className="bg-white px-2 py-1 rounded border">admin@test.com</code>
+            {error && (
+              <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 backdrop-blur-sm">
+                <div className="flex items-center gap-3">
+                  <div className="flex-shrink-0 w-1 h-1 rounded-full bg-red-400 shadow-[0_0_8px_rgba(248,113,113,0.8)]"></div>
+                  <p className="text-sm text-red-200 font-medium">{error.message}</p>
+                </div>
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="group relative w-full flex justify-center py-3.5 px-4 border border-transparent text-sm font-semibold rounded-xl text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900 focus:ring-blue-500 transition-all duration-200 shadow-lg hover:shadow-blue-500/30 disabled:opacity-70 disabled:cursor-not-allowed"
+            >
+              {loading ? (
+                <div className="flex items-center gap-2">
+                  <Loader2 className="h-5 w-5 animate-spin text-white/80" />
+                  <span>Signing in...</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <span>Sign In</span>
+                  <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                </div>
+              )}
+            </button>
+          </form>
+
+          <div className="pt-6 border-t border-white/10">
+            <p className="text-center text-xs font-semibold text-indigo-200/60 uppercase tracking-widest mb-4">
+              Demo Access
+            </p>
+            <div className="grid grid-cols-1 gap-3">
+              {[
+                { label: 'Admin', email: 'admin@test.com' },
+                { label: 'Manager', email: 'manager.in@test.com' },
+              ].map((cred) => (
+                <div
+                  key={cred.label}
+                  className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/5 hover:bg-white/10 transition-colors cursor-pointer group"
+                  onClick={() => {
+                    setEmail(cred.email);
+                    setPassword('password');
+                  }}
+                >
+                  <span className="text-xs font-medium text-indigo-200">{cred.label}</span>
+                  <div className="flex items-center gap-2">
+                    <code className="text-[10px] px-2 py-0.5 rounded bg-black/20 text-indigo-300 font-mono">
+                      {cred.email}
+                    </code>
+                    <ArrowRight className="w-3 h-3 text-white/0 group-hover:text-white/50 transition-all" />
+                  </div>
+                </div>
+              ))}
             </div>
-            <div className="flex justify-between items-center p-2 bg-gray-50 rounded border border-gray-100">
-              <span className="font-medium">Manager</span>
-              <code className="bg-white px-2 py-1 rounded border">manager.in@test.com</code>
-            </div>
-            <div className="flex justify-between items-center p-2 bg-gray-50 rounded border border-gray-100">
-              <span className="font-medium">Member</span>
-              <code className="bg-white px-2 py-1 rounded border">member.in@test.com</code>
-            </div>
-            <div className="text-center mt-2 text-gray-400">Password: <span className="font-mono text-gray-600">password</span></div>
+            <p className="text-center mt-4 text-xs text-indigo-300/40">
+              Password for all accounts: <span className="font-mono text-indigo-200">password</span>
+            </p>
           </div>
         </div>
       </div>

@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Search, Home, ShoppingBag, Heart, Settings, LogOut,
   MapPin, Clock, Star, Plus, Minus, Trash2, ChevronRight,
-  CreditCard, LayoutGrid, Receipt
+  CreditCard, Receipt, Store, Loader2
 } from "lucide-react";
 import { cn } from "../../lib/utils";
 
@@ -75,20 +75,22 @@ const CANCEL_ORDER = gql`
 
 const SidebarItem = ({ icon: Icon, label, active = false }: { icon: any, label: string, active?: boolean }) => (
   <button className={cn(
-    "flex items-center gap-3 w-full px-4 py-3 rounded-xl transition-all duration-200 group",
-    active ? "bg-blue-600 text-white shadow-lg shadow-blue-200" : "text-gray-500 hover:bg-gray-50 hover:text-gray-900"
+    "flex items-center gap-3 w-full px-3 py-2.5 rounded-lg transition-all duration-200 group text-sm font-medium",
+    active
+      ? "bg-zinc-900 text-white shadow-sm"
+      : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900"
   )}>
-    <Icon className={cn("w-5 h-5", active ? "text-white" : "text-gray-400 group-hover:text-gray-600")} />
-    <span className="font-medium">{label}</span>
+    <Icon className={cn("w-4 h-4", active ? "text-white" : "text-zinc-400 group-hover:text-zinc-600")} />
+    <span>{label}</span>
   </button>
 );
 
 const CategoryPill = ({ label, active = false }: { label: string, active?: boolean }) => (
   <button className={cn(
-    "px-6 py-2 rounded-full text-sm font-semibold transition-all whitespace-nowrap",
+    "px-5 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap border",
     active
-      ? "bg-gray-900 text-white shadow-md"
-      : "bg-white text-gray-600 border border-gray-100 hover:border-gray-300"
+      ? "bg-zinc-900 text-white border-zinc-900 shadow-sm"
+      : "bg-white text-zinc-600 border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50"
   )}>
     {label}
   </button>
@@ -101,9 +103,7 @@ export default function DashboardPage() {
   const { data, loading, error, refetch } = useQuery<any>(DASHBOARD_DATA, {
     pollInterval: 5000,
   });
-  const [createOrder] = useMutation(CREATE_ORDER);
-  const [checkoutOrder] = useMutation(CHECKOUT_ORDER);
-  const [cancelOrder] = useMutation(CANCEL_ORDER);
+  const [createOrder, { loading: creatingOrder }] = useMutation(CREATE_ORDER);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -157,33 +157,23 @@ export default function DashboardPage() {
     }
   };
 
-  const handleAction = async (mutation: any, id: string) => {
-    try {
-      await mutation({ variables: { id } });
-      refetch();
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
   if (!user) return null;
 
-  const isAdminOrManager = user.role === 'ADMIN' || user.role === 'MANAGER';
   const cartTotal = cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
 
   return (
-    <div className="flex h-screen bg-gray-50 font-sans text-gray-900 overflow-hidden">
+    <div className="flex h-screen bg-zinc-50 font-sans text-zinc-900 overflow-hidden">
 
       {/* Sidebar */}
-      <aside className="hidden md:flex flex-col w-64 bg-white border-r border-gray-100 p-6 z-20">
-        <div className="flex items-center gap-3 mb-10 px-2">
-          <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-blue-200">
-            F
+      <aside className="hidden lg:flex flex-col w-64 bg-white border-r border-zinc-200 p-4 z-20">
+        <div className="flex items-center gap-2 mb-8 px-2 mt-2">
+          <div className="w-8 h-8 bg-zinc-900 rounded-lg flex items-center justify-center text-white font-bold text-sm">
+            S
           </div>
-          <span className="text-xl font-bold tracking-tight">FoodApp</span>
+          <span className="text-lg font-semibold tracking-tight text-zinc-900">Slooze</span>
         </div>
 
-        <nav className="flex-1 space-y-2">
+        <nav className="flex-1 space-y-1">
           <SidebarItem icon={Home} label="Dashboard" active />
           <SidebarItem icon={ShoppingBag} label="Orders" />
           <SidebarItem icon={Heart} label="Favorites" />
@@ -191,14 +181,14 @@ export default function DashboardPage() {
           <SidebarItem icon={Settings} label="Settings" />
         </nav>
 
-        <div className="mt-auto pt-6 border-t border-gray-100">
-          <div className="flex items-center gap-3 px-2 mb-4">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-gray-200 to-gray-100 flex items-center justify-center text-gray-500 font-bold border border-white shadow-sm">
+        <div className="mt-auto pt-4 border-t border-zinc-100">
+          <div className="flex items-center gap-3 px-2 mb-3">
+            <div className="w-8 h-8 rounded-full bg-zinc-100 flex items-center justify-center text-zinc-500 font-bold border border-zinc-200 text-xs">
               {user.email.charAt(0).toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold text-gray-900 truncate">{user.name || "User"}</p>
-              <p className="text-xs text-gray-500 truncate">{user.email}</p>
+              <p className="text-sm font-medium text-zinc-900 truncate">{user.name || "User"}</p>
+              <p className="text-[10px] text-zinc-500 truncate">{user.email}</p>
             </div>
           </div>
           <button
@@ -207,167 +197,179 @@ export default function DashboardPage() {
               localStorage.removeItem('user');
               router.push('/login');
             }}
-            className="flex items-center gap-2 text-sm text-red-500 hover:text-red-600 px-2 font-medium transition-colors"
+            className="flex items-center gap-2 text-xs text-red-500 hover:text-red-600 px-2 py-1.5 font-medium transition-colors hover:bg-red-50 rounded w-full"
           >
-            <LogOut className="w-4 h-4" />
+            <LogOut className="w-3.5 h-3.5" />
             Sign Out
           </button>
         </div>
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col min-w-0 h-full overflow-hidden relative">
-        {/* Header (Mobile Logo + Search) */}
-        <header className="h-20 flex items-center justify-between px-8 bg-white/50 backdrop-blur-sm sticky top-0 z-10">
-          <div className="md:hidden flex items-center gap-2">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold">F</div>
+      <main className="flex-1 flex flex-col min-w-0 h-full overflow-hidden relative bg-zinc-50/50">
+        {/* Header */}
+        <header className="h-16 flex items-center justify-between px-6 bg-white/80 backdrop-blur-md sticky top-0 z-10 border-b border-zinc-200/50">
+          <div className="lg:hidden flex items-center gap-2">
+            <div className="w-8 h-8 bg-zinc-900 rounded-lg flex items-center justify-center text-white font-bold">S</div>
           </div>
 
-          <div className="flex-1 max-w-xl hidden md:block relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+          <div className="flex-1 max-w-sm hidden lg:block relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 w-4 h-4" />
             <input
               type="text"
-              placeholder="Search for restaurants, food..."
-              className="w-full pl-12 pr-4 py-3 bg-white border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-100 transition-shadow shadow-sm text-sm"
+              placeholder="Search..."
+              className="w-full pl-9 pr-4 py-2 bg-zinc-100/50 border border-zinc-200 rounded-md focus:outline-none focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-300 transition-all text-sm h-9 placeholder:text-zinc-500"
             />
           </div>
 
-          <div className="flex items-center gap-4">
-            <div className="md:hidden w-8 h-8 rounded-full bg-gray-200"></div>
-            <button className="hidden md:flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-full text-sm font-semibold text-gray-600 hover:bg-gray-200 transition-colors">
-              <MapPin className="w-4 h-4" />
-              {user.country === 'INDIA' ? 'Mumbai, India' : 'New York, USA'}
-            </button>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-zinc-200 rounded-full text-xs font-medium text-zinc-600 shadow-sm">
+              <MapPin className="w-3.5 h-3.5 text-zinc-400" />
+              {user.country === 'INDIA' ? 'Mumbai, IN' : 'New York, US'}
+            </div>
           </div>
         </header>
 
-        <div className="flex-1 overflow-y-auto px-8 py-6 custom-scrollbar">
+        <div className="flex-1 overflow-y-auto p-6 scroll-smooth">
+          <div className="max-w-6xl mx-auto space-y-8">
 
-          {/* Hero Section */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-10 w-full rounded-3xl bg-gradient-to-r from-blue-600 to-indigo-600 p-8 md:p-12 text-white relative overflow-hidden shadow-2xl shadow-blue-200"
-          >
-            <div className="relative z-10 max-w-lg">
-              <span className="inline-block px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-xs font-bold mb-4 border border-white/10">Free Delivery</span>
-              <h1 className="text-4xl md:text-5xl font-extrabold mb-4 leading-tight">Craving something specific?</h1>
-              <p className="text-blue-100 mb-8 text-lg">Order from your favorite restaurants and get 20% off your first order.</p>
-              <button className="bg-white text-blue-600 px-8 py-3 rounded-xl font-bold hover:bg-blue-50 transition-colors shadow-lg">
-                Order Now
-              </button>
-            </div>
-            <div className="absolute right-0 top-0 h-full w-1/2 bg-[url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80')] bg-cover bg-center opacity-20 mix-blend-overlay"></div>
-          </motion.div>
-
-          {/* Categories */}
-          <div className="mb-10 flex gap-4 overflow-x-auto pb-4 custom-scrollbar">
-            <CategoryPill label="All" active />
-            <CategoryPill label="Pizza" />
-            <CategoryPill label="Asian" />
-            <CategoryPill label="Burgers" />
-            <CategoryPill label="Dessert" />
-            <CategoryPill label="Vegan" />
-          </div>
-
-          {/* Restaurant Grid */}
-          <div className="mb-8">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-gray-900">Popular Restaurants</h2>
-              <button className="text-blue-600 font-semibold text-sm hover:underline">View All</button>
-            </div>
-
-            {loading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {[1, 2, 3].map(n => <div key={n} className="h-64 bg-gray-200 rounded-3xl animate-pulse" />)}
+            {/* Hero Section */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="relative w-full rounded-2xl bg-zinc-900 p-8 text-white overflow-hidden shadow-xl"
+            >
+              <div className="relative z-10 max-w-md">
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-white/10 text-zinc-100 border border-white/10 mb-4">
+                  Premium Selection
+                </span>
+                <h1 className="text-3xl font-bold mb-3 tracking-tight">Culinary Excellence</h1>
+                <p className="text-zinc-400 mb-6 text-sm leading-relaxed max-w-sm">
+                  Experience the finest dining from top-rated restaurants, delivered directly to your doorstep with priority handling.
+                </p>
+                <button className="bg-white text-zinc-900 px-6 py-2.5 rounded-lg text-sm font-semibold hover:bg-zinc-100 transition-colors shadow-sm">
+                  Explore Menu
+                </button>
               </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-8">
-                {data?.restaurants.map((rest: any, idx: number) => (
-                  <motion.div
-                    key={rest.id}
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: idx * 0.1 }}
-                    className="group bg-white rounded-3xl p-4 shadow-sm hover:shadow-xl border border-gray-100 transition-all duration-300"
-                  >
-                    <div className="h-40 rounded-2xl bg-gray-100 mb-4 overflow-hidden relative">
-                      {/* Mock Image using gradients based on index */}
-                      <div className={`w-full h-full bg-gradient-to-br ${idx % 2 === 0 ? 'from-orange-100 to-orange-50' : 'from-green-100 to-green-50'} flex items-center justify-center`}>
-                        <span className="text-4xl">
-                          {idx % 2 === 0 ? '🍕' : '🥗'}
-                        </span>
-                      </div>
-                      <div className="absolute top-3 right-3 bg-white px-2 py-1 rounded-lg text-xs font-bold shadow-sm flex items-center gap-1">
-                        <Clock className="w-3 h-3 text-gray-400" />
-                        <span>25 min</span>
-                      </div>
-                    </div>
 
-                    <div className="flex justify-between items-start mb-2 px-1">
-                      <div>
-                        <h3 className="font-bold text-lg text-gray-900">{rest.name}</h3>
-                        <div className="flex items-center gap-1 text-xs text-gray-500">
-                          <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
-                          <span className="font-bold text-gray-700">4.5</span>
-                          <span>•</span>
-                          <span>{rest.country}</span>
+              {/* Decorative Mesh */}
+              <div className="absolute top-0 right-0 -mt-10 -mr-10 w-64 h-64 bg-gradient-to-br from-indigo-500/30 to-purple-500/30 blur-3xl rounded-full"></div>
+              <div className="absolute bottom-0 right-20 w-40 h-40 bg-gradient-to-tr from-blue-500/20 to-teal-500/20 blur-2xl rounded-full"></div>
+            </motion.div>
+
+            {/* Categories */}
+            <div className="space-y-3">
+              <h2 className="text-sm font-semibold text-zinc-900 tracking-tight">Categories</h2>
+              <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
+                <CategoryPill label="All" active />
+                <CategoryPill label="Fine Dining" />
+                <CategoryPill label="Asian Fusion" />
+                <CategoryPill label="Gourmet Burgers" />
+                <CategoryPill label="Patisserie" />
+                <CategoryPill label="Organic" />
+              </div>
+            </div>
+
+            {/* Restaurant Grid */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-sm font-semibold text-zinc-900 tracking-tight">Featured Restaurants</h2>
+                <button className="text-xs font-medium text-zinc-500 hover:text-zinc-900 transition-colors">View All</button>
+              </div>
+
+              {loading ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {[1, 2, 3].map(n => <div key={n} className="h-64 bg-zinc-100 rounded-xl animate-pulse" />)}
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {data?.restaurants.map((rest: any, idx: number) => (
+                    <motion.div
+                      key={rest.id}
+                      initial={{ opacity: 0, scale: 0.98 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: idx * 0.05 }}
+                      className="group bg-white rounded-xl border border-zinc-200 overflow-hidden hover:border-zinc-300 hover:shadow-md transition-all duration-300 flex flex-col h-full"
+                    >
+                      <div className="h-32 bg-zinc-100 relative overflow-hidden group-hover:opacity-90 transition-opacity">
+                        <div className={`w-full h-full bg-gradient-to-br ${idx % 2 === 0 ? 'from-zinc-100 to-zinc-200' : 'from-slate-100 to-slate-200'} flex items-center justify-center`}>
+                          <Store className="w-8 h-8 text-zinc-300" />
+                        </div>
+                        <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded text-[10px] font-bold shadow-sm border border-zinc-100 flex items-center gap-1">
+                          <Clock className="w-3 h-3 text-zinc-400" />
+                          <span>25m</span>
                         </div>
                       </div>
-                    </div>
 
-                    <div className="space-y-3 mt-4">
-                      {rest.menuItems.slice(0, 3).map((item: any) => (
-                        <div key={item.id} className="flex items-center justify-between p-2 rounded-xl hover:bg-gray-50 transition-colors group/item">
-                          <div className="flex flex-col">
-                            <span className="text-sm font-medium text-gray-700">{item.name}</span>
-                            <span className="text-xs text-gray-400">${item.price}</span>
+                      <div className="p-4 flex-1 flex flex-col">
+                        <div className="mb-3">
+                          <h3 className="font-semibold text-zinc-900">{rest.name}</h3>
+                          <div className="flex items-center gap-2 text-xs text-zinc-500 mt-1">
+                            <span className="flex items-center gap-0.5 text-zinc-700 font-medium">
+                              <Star className="w-3 h-3 fill-zinc-700 text-zinc-700" /> 4.8
+                            </span>
+                            <span>•</span>
+                            <span>{rest.country}</span>
                           </div>
-                          <button
-                            onClick={() => addToCart(item)}
-                            className="w-8 h-8 rounded-full bg-gray-100 hover:bg-blue-600 hover:text-white flex items-center justify-center transition-colors text-blue-600"
-                          >
-                            <Plus className="w-4 h-4" />
-                          </button>
                         </div>
-                      ))}
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            )}
+
+                        <div className="space-y-2 mt-auto">
+                          {rest.menuItems.slice(0, 2).map((item: any) => (
+                            <div key={item.id} className="flex items-center justify-between p-2 rounded-lg bg-zinc-50 hover:bg-zinc-100 transition-colors group/item cursor-pointer" onClick={() => addToCart(item)}>
+                              <div className="flex flex-col">
+                                <span className="text-xs font-medium text-zinc-700">{item.name}</span>
+                                <span className="text-[10px] text-zinc-500">${item.price}</span>
+                              </div>
+                              <button
+                                className="w-6 h-6 rounded bg-white border border-zinc-200 hover:border-zinc-300 flex items-center justify-center transition-all text-zinc-600 shadow-sm"
+                              >
+                                <Plus className="w-3 h-3" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </main>
 
-      {/* Right Sidebar (Cart & Activity) */}
-      <aside className="w-96 bg-white border-l border-gray-100 hidden xl:flex flex-col z-20">
-        <div className="p-6 border-b border-gray-100">
-          <h2 className="text-xl font-bold text-gray-900 mb-6">My Order</h2>
+      {/* Right Sidebar (Cart) */}
+      <aside className="w-80 bg-white border-l border-zinc-200 hidden xl:flex flex-col z-20">
+        <div className="p-5 border-b border-zinc-100">
+          <h2 className="text-sm font-semibold text-zinc-900 mb-4 flex items-center gap-2">
+            <ShoppingBag className="w-4 h-4" /> Current Order
+          </h2>
 
           {/* Cart Items */}
-          <div className="flex-1 overflow-y-auto min-h-[300px] max-h-[50vh] pr-2 custom-scrollbar">
-            <AnimatePresence>
+          <div className="flex-1 overflow-y-auto min-h-[300px] max-h-[55vh] pr-1 scrollbar-thin scrollbar-thumb-zinc-200">
+            <AnimatePresence mode="popLayout">
               {cart.map((item) => (
                 <motion.div
                   key={item.menuItemId}
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  className="bg-gray-50 p-4 rounded-2xl mb-3 border border-gray-100"
+                  layout
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  className="group flex flex-col gap-2 p-3 rounded-lg border border-zinc-100 hover:border-zinc-200 bg-zinc-50/50 mb-2 transition-colors"
                 >
-                  <div className="flex justify-between items-start mb-3">
-                    <span className="font-semibold text-sm text-gray-800 line-clamp-1">{item.name}</span>
-                    <span className="font-bold text-sm">${(item.price * item.quantity).toFixed(2)}</span>
+                  <div className="flex justify-between items-start">
+                    <span className="font-medium text-xs text-zinc-800 line-clamp-1">{item.name}</span>
+                    <span className="font-semibold text-xs text-zinc-900">${(item.price * item.quantity).toFixed(2)}</span>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3 bg-white rounded-lg p-1 border border-gray-200">
-                      <button onClick={() => updateQuantity(item.menuItemId, -1)} className="p-1 hover:bg-gray-100 rounded"><Minus className="w-3 h-3" /></button>
-                      <span className="text-xs font-bold w-4 text-center">{item.quantity}</span>
-                      <button onClick={() => updateQuantity(item.menuItemId, 1)} className="p-1 hover:bg-gray-100 rounded"><Plus className="w-3 h-3" /></button>
+
+                  <div className="flex items-center justify-between mt-1">
+                    <div className="flex items-center gap-2 bg-white rounded border border-zinc-200 px-1 py-0.5 shadow-sm">
+                      <button onClick={() => updateQuantity(item.menuItemId, -1)} className="p-0.5 hover:bg-zinc-100 rounded text-zinc-500 disabled:opacity-50"><Minus className="w-3 h-3" /></button>
+                      <span className="text-xs font-medium w-4 text-center tabular-nums">{item.quantity}</span>
+                      <button onClick={() => updateQuantity(item.menuItemId, 1)} className="p-0.5 hover:bg-zinc-100 rounded text-zinc-500"><Plus className="w-3 h-3" /></button>
                     </div>
-                    <button onClick={() => removeFromCart(item.menuItemId)} className="text-gray-400 hover:text-red-500 transition-colors">
-                      <Trash2 className="w-4 h-4" />
+                    <button onClick={() => removeFromCart(item.menuItemId)} className="text-zinc-400 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100">
+                      <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 </motion.div>
@@ -375,56 +377,54 @@ export default function DashboardPage() {
             </AnimatePresence>
 
             {cart.length === 0 && (
-              <div className="h-40 flex flex-col items-center justify-center text-gray-400 gap-2 border-2 border-dashed border-gray-200 rounded-2xl">
-                <ShoppingBag className="w-8 h-8 opacity-20" />
-                <span className="text-sm">Cart is empty</span>
+              <div className="h-48 flex flex-col items-center justify-center text-zinc-400 gap-3 border border-dashed border-zinc-200 rounded-lg bg-zinc-50/50">
+                <ShoppingBag className="w-6 h-6 opacity-20" />
+                <span className="text-xs">Your cart is empty</span>
               </div>
             )}
           </div>
 
-          {/* Cart Summary */}
-          {cart.length > 0 && (
-            <div className="mt-6 space-y-3">
-              <div className="flex justify-between text-sm text-gray-500">
-                <span>Subtotal</span>
-                <span>${cartTotal.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between text-sm text-gray-500">
-                <span>Delivery</span>
-                <span className="text-green-600 font-medium">Free</span>
-              </div>
-              <div className="flex justify-between text-xl font-bold text-gray-900 pt-4 border-t border-gray-100">
-                <span>Total</span>
-                <span>${cartTotal.toFixed(2)}</span>
-              </div>
-              <button
-                onClick={handlePlaceOrder}
-                className="w-full py-4 bg-gray-900 text-white rounded-2xl font-bold text-lg hover:bg-black transition-all shadow-xl hover:shadow-2xl active:scale-95 flex items-center justify-center gap-2 mt-4"
-              >
-                Checkout <ChevronRight className="w-5 h-5" />
-              </button>
+          {/* Checkout Section */}
+          <div className="mt-4 pt-4 border-t border-dashed border-zinc-200 space-y-3">
+            <div className="flex justify-between text-xs text-zinc-500">
+              <span>Subtotal</span>
+              <span>${cartTotal.toFixed(2)}</span>
             </div>
-          )}
+            <div className="flex justify-between text-xs text-zinc-500">
+              <span>Fees</span>
+              <span>$2.00</span>
+            </div>
+            <div className="flex justify-between items-center pt-2">
+              <span className="font-semibold text-sm text-zinc-900">Total</span>
+              <span className="font-bold text-lg text-zinc-900">${(cartTotal > 0 ? cartTotal + 2 : 0).toFixed(2)}</span>
+            </div>
+
+            <button
+              onClick={handlePlaceOrder}
+              disabled={cart.length === 0 || creatingOrder}
+              className="w-full py-2.5 bg-zinc-900 text-white rounded-lg text-sm font-medium hover:bg-zinc-800 transition-all shadow-lg shadow-zinc-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              {creatingOrder ? <Loader2 className="w-4 h-4 animate-spin" /> : "Checkout"}
+            </button>
+          </div>
         </div>
 
-        {/* Recent Activity Mini-List */}
-        <div className="flex-1 bg-gray-50 p-6 overflow-hidden flex flex-col">
-          <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
-            <Clock className="w-4 h-4 text-blue-600" /> Recent Activity
-          </h3>
-          <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-3">
+        {/* Activity Feed */}
+        <div className="flex-1 bg-zinc-50 p-5 flex flex-col min-h-0 border-t border-zinc-100">
+          <h3 className="font-semibold text-xs text-zinc-500 uppercase tracking-wider mb-3">Recent Activity</h3>
+          <div className="flex-1 overflow-y-auto space-y-2 pr-1 scrollbar-thin scrollbar-thumb-zinc-200">
             {data?.orders.map((order: any) => (
-              <div key={order.id} className="bg-white p-3 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between">
-                <div className="flex flex-col">
-                  <span className="text-xs font-bold text-gray-900">Order #{order.id.slice(0, 4)}</span>
-                  <span className="text-[10px] text-gray-400">{order.items.length} items • ${order.total}</span>
+              <div key={order.id} className="bg-white p-3 rounded-lg border border-zinc-200 shadow-sm flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-semibold text-zinc-900">Order #{order.id.slice(0, 4)}</p>
+                  <p className="text-[10px] text-zinc-400 mt-0.5">{order.items.length} items</p>
                 </div>
                 <div className={cn(
-                  "text-[10px] font-bold px-2 py-1 rounded-full uppercase",
-                  order.status === 'PAID' ? "bg-green-100 text-green-700" :
-                    order.status === 'PENDING' ? "bg-yellow-100 text-yellow-700" : "bg-red-100 text-red-700"
+                  "text-[10px] font-bold px-1.5 py-0.5 rounded border capitalize",
+                  order.status === 'PAID' ? "bg-emerald-50 text-emerald-700 border-emerald-100" :
+                    order.status === 'PENDING' ? "bg-amber-50 text-amber-700 border-amber-100" : "bg-red-50 text-red-700 border-red-100"
                 )}>
-                  {order.status}
+                  {order.status.toLowerCase()}
                 </div>
               </div>
             ))}
