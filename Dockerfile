@@ -1,6 +1,9 @@
 # ------------- 1: Build stage -------------
 FROM node:22-alpine AS builder
 
+# Install OpenSSL for Prisma binary detection
+RUN apk add --no-cache openssl
+
 WORKDIR /usr/src/app
 
 COPY package*.json ./
@@ -17,11 +20,13 @@ RUN npm prune --production
 # ------------- 2: Production stage -------------
 FROM node:22-alpine AS production
 
+# Install OpenSSL for Prisma runtime
+RUN apk add --no-cache openssl
+
 WORKDIR /usr/src/app
 
 ENV NODE_ENV=production
 
-# Copy necessary files from builder
 COPY --from=builder /usr/src/app/node_modules ./node_modules
 COPY --from=builder /usr/src/app/dist ./dist
 COPY --from=builder /usr/src/app/prisma ./prisma
