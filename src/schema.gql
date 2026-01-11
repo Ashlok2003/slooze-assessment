@@ -1,0 +1,131 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+enum Country {
+  AMERICA
+  INDIA
+}
+
+input CreateMenuItemInput {
+  name: String!
+  price: Float!
+}
+
+input CreateOrderInput {
+  items: [CreateOrderItemInput!]!
+}
+
+input CreateOrderItemInput {
+  menuItemId: String!
+  quantity: Int!
+}
+
+input CreatePaymentMethodInput {
+  details: String!
+  type: String!
+  userId: String!
+}
+
+input CreateRestaurantInput {
+  country: Country!
+  menuItems: [CreateMenuItemInput!]
+  name: String!
+}
+
+input CreateUserInput {
+  country: Country! = INDIA
+  email: String!
+  name: String
+  password: String!
+  role: Role! = MEMBER
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+input LoginInput {
+  email: String!
+  password: String!
+}
+
+type LoginResponse {
+  access_token: String!
+  user: User!
+}
+
+type MenuItem {
+  id: String!
+  name: String!
+  price: Float!
+}
+
+type Mutation {
+  cancelOrder(id: String!): Order!
+  checkoutOrder(id: String!): Order!
+  createOrder(createOrderInput: CreateOrderInput!): Order!
+  createPaymentMethod(createPaymentMethodInput: CreatePaymentMethodInput!): PaymentMethod!
+  createRestaurant(createRestaurantInput: CreateRestaurantInput!): Restaurant!
+  login(loginInput: LoginInput!): LoginResponse!
+  signup(createUserInput: CreateUserInput!): LoginResponse!
+}
+
+type Order {
+  createdAt: DateTime!
+  id: String!
+  items: [OrderItem!]!
+  status: OrderStatus!
+  total: Float!
+  updatedAt: DateTime!
+  user: User!
+}
+
+type OrderItem {
+  id: String!
+  menuItem: MenuItem!
+  quantity: Int!
+}
+
+enum OrderStatus {
+  CANCELLED
+  PAID
+  PENDING
+}
+
+type PaymentMethod {
+  details: String!
+  id: String!
+  type: String!
+  user: User!
+}
+
+type Query {
+  orders: [Order!]!
+  paymentMethods: [PaymentMethod!]!
+  restaurants: [Restaurant!]!
+}
+
+type Restaurant {
+  country: Country!
+  id: String!
+  menuItems: [MenuItem!]
+  name: String!
+}
+
+enum Role {
+  ADMIN
+  MANAGER
+  MEMBER
+}
+
+type User {
+  country: Country!
+  createdAt: DateTime!
+  email: String!
+  id: String!
+  name: String
+  role: Role!
+  updatedAt: DateTime!
+}
