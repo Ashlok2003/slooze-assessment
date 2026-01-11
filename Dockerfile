@@ -1,29 +1,32 @@
-# Base image
-FROM node:22-alpine
+# ------------- 1: Build stage -------------
+FROM node:22-alpine AS builder
 
-# Working directory
 WORKDIR /usr/src/app
 
-# Install system dependencies
-RUN apk add --no-cache openssl
-
-# Install dependencies (only package files first for caching)
 COPY package*.json ./
 COPY prisma ./prisma/
+RUN npm ci
 
-# Install dependencies
-RUN npm install
-
-# Generate Prisma Client
-RUN npx prisma generate
-
-# Copy source code
 COPY . .
 
-# Build the application
+RUN npx prisma generate
 RUN npm run build
 
-# Expose port
+RUN npm prune --production
+
+# ------------- 2: Production stage -------------
+FROM node:22-alpine AS production
+
+WORKDIR /usr/src/app
+
+ENV NODE_ENV=production
+
+# Copy necessary files from builder
+COPY --from=builder /usr/src/app/node_modules ./node_modules
+COPY --from=builder /usr/src/app/dist ./dist
+COPY --from=builder /usr/src/app/prisma ./prisma
+COPY --from=builder /usr/src/app/package*.json ./
+
 EXPOSE 3000
 
-CMD ["npm", "run", "start:prod"]
+CMD ["node", "dist/src/main"]
