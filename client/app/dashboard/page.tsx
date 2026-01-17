@@ -115,6 +115,23 @@ const DELETE_SHARED_CART = gql`
   }
 `;
 
+const ADD_ITEMS_TO_SHARED_CART = gql`
+  mutation AddItemsToSharedCart($input: AddItemsToSharedCartInput!) {
+    addItemsToSharedCart(input: $input) {
+      id
+      items {
+        id
+        quantity
+        menuItem {
+          id
+          name
+          price
+        }
+      }
+    }
+  }
+`;
+
 // --- Components ---
 
 const SidebarItem = ({ icon: Icon, label, active = false }: { icon: any, label: string, active?: boolean }) => (
@@ -157,6 +174,7 @@ export default function DashboardPage() {
   const [createOrder, { loading: creatingOrder }] = useMutation(CREATE_ORDER);
   const [createSharedCart, { loading: creatingSharedCart }] = useMutation(CREATE_SHARED_CART);
   const [deleteSharedCart] = useMutation(DELETE_SHARED_CART);
+  const [addItemsToSharedCart, { loading: addingItemsToSharedCart }] = useMutation(ADD_ITEMS_TO_SHARED_CART);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -243,6 +261,25 @@ export default function DashboardPage() {
       quantity: item.quantity,
     }));
     setCart(newItems);
+  };
+
+  const handleAddToSharedCart = async (sharedCartId: string) => {
+    if (cart.length === 0) return;
+    try {
+      await addItemsToSharedCart({
+        variables: {
+          input: {
+            sharedCartId,
+            items: cart.map((i) => ({ menuItemId: i.menuItemId, quantity: i.quantity })),
+          },
+        },
+      });
+      alert("Items added to shared cart!");
+      refetchSharedCarts();
+    } catch (err) {
+      console.error(err);
+      alert("Failed to add items to shared cart");
+    }
   };
 
   const handleDeleteSharedCart = async (id: string) => {
@@ -610,10 +647,20 @@ export default function DashboardPage() {
                 <div className="flex gap-1.5 mt-2">
                   <button
                     onClick={() => handleImportCart(sharedCart)}
-                    className="flex-1 py-1.5 text-[10px] font-medium bg-zinc-900 text-white rounded hover:bg-zinc-800 transition-colors flex items-center justify-center gap-1"
+                    className="flex-1 py-1.5 text-[10px] font-medium bg-zinc-100 text-zinc-900 rounded hover:bg-zinc-200 transition-colors flex items-center justify-center gap-1"
+                    title="Import to my cart"
+                  >
+                    <Copy className="w-3 h-3" />
+                    Import
+                  </button>
+                  <button
+                    onClick={() => handleAddToSharedCart(sharedCart.id)}
+                    disabled={cart.length === 0}
+                    className="flex-1 py-1.5 text-[10px] font-medium bg-zinc-900 text-white rounded hover:bg-zinc-800 transition-colors flex items-center justify-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Add my cart items to this shared cart"
                   >
                     <Plus className="w-3 h-3" />
-                    Import
+                    Add Items
                   </button>
                   {sharedCart.createdBy?.id === user?.email && (
                     <button

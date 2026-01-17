@@ -18,3 +18,12 @@ export class CreateSharedCartInput {
   @Field(() => [SharedCartItemInput])
   items: SharedCartItemInput[];
 }
+
+@InputType()
+export class AddItemsToSharedCartInput {
+  @Field()
+  sharedCartId: string;
+
+  @Field(() => [SharedCartItemInput])
+  items: SharedCartItemInput[];
+}

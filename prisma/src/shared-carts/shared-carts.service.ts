@@ -155,4 +155,77 @@ export class SharedCartsService {
       orderBy: { createdAt: 'desc' },
     });
   }
+
+  /**
+   * Add items to an existing shared cart
+   * Any user in the same country can add items
+   */
+  async addItemsToSharedCart(
+    sharedCartId: string,
+    items: { menuItemId: string; quantity: number }[],
+    user: User,
+  ) {
+    const sharedCart = await this.prisma.sharedCart.findUnique({
+      where: { id: sharedCartId },
+      include: { items: true },
+    });
+
+    if (!sharedCart) {
+      throw new NotFoundException('Shared cart not found');
+    }
+
+    // Check if user is from the same country
+    if (sharedCart.country !== user.country) {
+      throw new ForbiddenException(
+        'You can only add items to shared carts in your country',
+      );
+    }
+
+    // Validate all menu items exist
+    const menuItemIds = items.map((item) => item.menuItemId);
+    const menuItems = await this.prisma.menuItem.findMany({
+      where: { id: { in: menuItemIds } },
+    });
+
+    if (menuItems.length !== menuItemIds.length) {
+      throw new NotFoundException('One or more menu items not found');
+    }
+
+    // Add new items or update quantities for existing items
+    for (const item of items) {
+      const existingItem = sharedCart.items.find(
+        (i) => i.menuItemId === item.menuItemId,
+      );
+
+      if (existingItem) {
+        // Update quantity
+        await this.prisma.sharedCartItem.update({
+          where: { id: existingItem.id },
+          data: { quantity: existingItem.quantity + item.quantity },
+        });
+      } else {
+        // Add new item
+        await this.prisma.sharedCartItem.create({
+          data: {
+            sharedCartId: sharedCart.id,
+            menuItemId: item.menuItemId,
+            quantity: item.quantity,
+          },
+        });
+      }
+    }
+
+    // Return updated cart
+    return this.prisma.sharedCart.findUnique({
+      where: { id: sharedCartId },
+      include: {
+        createdBy: true,
+        items: {
+          include: {
+            menuItem: true,
+          },
+        },
+      },
+    });
+  }
 }
