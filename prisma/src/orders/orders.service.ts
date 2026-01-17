@@ -9,7 +9,7 @@ import { User, Role, OrderStatus } from '@prisma/client';
 
 @Injectable()
 export class OrdersService {
-  constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService) {}
 
   async create(user: User, createOrderInput: CreateOrderInput) {
     // Calculate total and verify items

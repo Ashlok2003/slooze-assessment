@@ -26,16 +26,17 @@ enum OrderStatus {
 }
 
 model User {
-  id        String          @id @default(uuid())
-  email     String          @unique
-  password  String
-  name      String?
-  role      Role            @default(MEMBER)
-  country   Country         @default(INDIA)
-  orders    Order[]
-  payments  PaymentMethod[]
-  createdAt DateTime        @default(now())
-  updatedAt DateTime        @updatedAt
+  id          String          @id @default(uuid())
+  email       String          @unique
+  password    String
+  name        String?
+  role        Role            @default(MEMBER)
+  country     Country         @default(INDIA)
+  orders      Order[]
+  payments    PaymentMethod[]
+  sharedCarts SharedCart[]
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
 }
 
 model Restaurant {
@@ -48,14 +49,15 @@ model Restaurant {
 }
 
 model MenuItem {
-  id           String      @id @default(uuid())
-  name         String
-  price        Float
-  restaurant   Restaurant  @relation(fields: [restaurantId], references: [id])
-  restaurantId String
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
-  orderItems   OrderItem[]
+  id              String           @id @default(uuid())
+  name            String
+  price           Float
+  restaurant      Restaurant       @relation(fields: [restaurantId], references: [id])
+  restaurantId    String
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  orderItems      OrderItem[]
+  sharedCartItems SharedCartItem[]
 }
 
 model Order {
@@ -85,4 +87,24 @@ model PaymentMethod {
   type      String // e.g., 'CREDIT_CARD', 'PAYPAL'
   details   String // JSON string or masked info
   createdAt DateTime @default(now())
+}
+
+model SharedCart {
+  id          String           @id @default(uuid())
+  shareCode   String           @unique
+  country     Country
+  createdBy   User             @relation(fields: [createdById], references: [id])
+  createdById String
+  items       SharedCartItem[]
+  expiresAt   DateTime?
+  createdAt   DateTime         @default(now())
+}
+
+model SharedCartItem {
+  id           String     @id @default(uuid())
+  sharedCart   SharedCart @relation(fields: [sharedCartId], references: [id], onDelete: Cascade)
+  sharedCartId String
+  menuItem     MenuItem   @relation(fields: [menuItemId], references: [id])
+  menuItemId   String
+  quantity     Int
 }

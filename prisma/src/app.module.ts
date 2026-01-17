@@ -10,6 +10,7 @@ import { RestaurantsModule } from './restaurants/restaurants.module';
 import { OrdersModule } from './orders/orders.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { PaymentsModule } from './payments/payments.module';
+import { SharedCartsModule } from './shared-carts/shared-carts.module';
 
 import { ConfigModule } from '@nestjs/config';
 import * as Joi from 'joi';
@@ -34,6 +35,7 @@ import * as Joi from 'joi';
     RestaurantsModule,
     OrdersModule,
     PaymentsModule,
+    SharedCartsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
